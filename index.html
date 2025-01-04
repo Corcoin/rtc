@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Test</title>
+</head>
+<body>
+    <h1>Connect to WebRTC Signaling Server</h1>
+    <button id="connect">Connect</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer/simplepeer.min.js"></script>
+    <script>
+        // Declare the signalingServer variable
+        const signalingServer = new WebSocket('ws://https://0b52-2600-1700-b3a0-f20-9e92-1397-8505-72b6.ngrok-free.app '); // Replace with your laptop's IP address
+
+        // Handle WebSocket connection
+        signalingServer.onopen = () => {
+            console.log('Signaling server connected.');
+        };
+
+        signalingServer.onerror = (err) => {
+            console.error('WebSocket error:', err);
+        };
+
+        signalingServer.onclose = () => {
+            console.log('Signaling server disconnected.');
+        };
+
+        // Set up SimplePeer for WebRTC
+        const peer = new SimplePeer({
+            initiator: true,
+            trickle: false,
+            config: {
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            }
+        });
+
+        // Handle signaling messages from the signaling server
+        signalingServer.onmessage = (message) => {
+            const data = JSON.parse(message.data);
+            console.log('Received signaling data:', data);
+            peer.signal(data); // Pass the signaling data to SimplePeer
+        };
+
+        // Send signaling data to the signaling server
+        peer.on('signal', (data) => {
+            signalingServer.send(JSON.stringify(data));
+            console.log('Sent signaling data:', data);
+        });
+
+        // Handle WebRTC connection events
+        peer.on('connect', () => {
+            console.log('WebRTC connection established.');
+            alert('Connected via WebRTC!');
+        });
+
+        peer.on('error', (err) => {
+            console.error('WebRTC error:', err);
+        });
+
+        // Button to initiate the WebRTC connection
+        document.getElementById('connect').addEventListener('click', () => {
+            console.log('Connecting to signaling server...');
+        });
+    </script>
+</body>
+</html>
